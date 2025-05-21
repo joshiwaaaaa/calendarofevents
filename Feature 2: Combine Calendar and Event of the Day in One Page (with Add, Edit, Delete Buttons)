@@ -1,0 +1,80 @@
+//Add this to your imports (if not already present):
+from tkcalendar import Calendar
+
+//You need to install it via pip if not yet installed:
+pip install tkcalendar
+
+// Modify your GUI to add a new combined view tab
+tab_control.add(events_tab, text="Events")
+
+//Right after it, insert:
+calendar_tab = ttk.Frame(tab_control)
+tab_control.add(calendar_tab, text="Calendar View")
+
+//Create the UI for the calendar view Add this below the tab declarations:
+
+# --- Calendar View Layout ---
+calendar_frame = ttk.Frame(calendar_tab)
+calendar_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+# Calendar widget
+cal = Calendar(calendar_frame, selectmode='day', date_pattern='yyyy-mm-dd')
+cal.pack(side="left", padx=10, pady=10)
+
+# Right-side panel for event list and actions
+right_panel = ttk.Frame(calendar_frame)
+right_panel.pack(side="left", fill="both", expand=True, padx=10)
+
+# Event list for the selected day
+daily_event_list = ttk.Treeview(right_panel, columns=("ID", "Title", "Type", "Status", "Start", "End"), show="headings")
+for col in ("ID", "Title", "Type", "Status", "Start", "End"):
+    daily_event_list.heading(col, text=col)
+    daily_event_list.column(col, width=100)
+daily_event_list.pack(fill="both", expand=True)
+
+# Refresh daily events when date is selected
+def refresh_daily_events():
+    for item in daily_event_list.get_children():
+        daily_event_list.delete(item)
+
+    selected_date = cal.get_date()
+    try:
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT event_id, title, event_type, event_status, start_time, end_time
+            FROM event
+            WHERE user_id = %s AND DATE(start_time) = %s
+            ORDER BY start_time ASC
+        """, (user_id, selected_date))
+        events = cursor.fetchall()
+        conn.close()
+
+        for event in events:
+            daily_event_list.insert("", "end", values=event)
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to load daily events: {e}")
+
+cal.bind("<<CalendarSelected>>", lambda e: refresh_daily_events())
+
+
+//Add buttons below the daily event list Add these below daily_event_list.pack(...):
+
+btns = ttk.Frame(right_panel)
+btns.pack(fill="x", pady=5)
+
+ttk.Button(btns, text="Add", command=add_event).pack(side="left", padx=5)
+
+ttk.Button(btns, text="Edit", command=lambda: show_event_details(
+    daily_event_list.item(daily_event_list.focus())["values"][0]
+)).pack(side="left", padx=5)
+
+ttk.Button(btns, text="Delete", command=lambda: delete_specific_event(
+    daily_event_list.item(daily_event_list.focus())["values"][0]
+)).pack(side="left", padx=5)
+
+
+//Automatically load events on first open After tab_control.pack(expand=1, fill="both"), add:
+
+refresh_daily_events()
+
