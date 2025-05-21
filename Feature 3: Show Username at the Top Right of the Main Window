@@ -1,0 +1,27 @@
+# STEP 1 Create a function to get the username Add this function after your connect_db() function:
+
+def get_username(user_id):
+    try:
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT username FROM users WHERE id = %s", (user_id,))
+        result = cursor.fetchone()
+        conn.close()
+        return result[0] if result else "Unknown"
+    except Exception as e:
+        return f"Error: {e}"
+
+# Step 2: Add a top frame to show the username Near the top of your main() function (after creating root = tk.Tk()), add this:
+
+# Top header frame
+top_frame = ttk.Frame(root)
+top_frame.pack(fill="x", pady=5, padx=10)
+
+# App title
+app_title = ttk.Label(top_frame, text="Event Management System", font=("Arial", 16, "bold"))
+app_title.pack(side="left")
+
+# Get and show username
+username = get_username(user_id)
+user_label = ttk.Label(top_frame, text=f"Logged in as: {username}", font=("Arial", 10))
+user_label.pack(side="right")
