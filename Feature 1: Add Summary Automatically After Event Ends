@@ -1,0 +1,44 @@
+from datetime import datetime
+
+def refresh_event_list():
+    for item in event_listbox.get_children():
+        event_listbox.delete(item)
+
+    try:
+        conn = connect_db()
+        if not conn:
+            messagebox.showerror("Database Error", "Could not connect to database")
+            return
+
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT event_id, title, event_type, event_status, start_time, end_time
+            FROM event 
+            WHERE user_id=%s
+            ORDER BY start_time DESC
+        """, (user_id,))
+
+        events = cursor.fetchall()
+
+        for event in events:
+            event_id, title, event_type, status, start_time, end_time = event
+            event_listbox.insert("", "end", text=str(event_id),
+                                 values=(event_id, title, event_type, status, start_time))
+
+            # Check if the event has ended and has no summary
+            if datetime.now() > end_time:
+                cursor.execute("""
+                    SELECT COUNT(*) FROM event_summary WHERE event_id=%s
+                """, (event_id,))
+                has_summary = cursor.fetchone()[0]
+
+                if has_summary == 0:
+                    cursor.execute("""
+                        INSERT INTO event_summary (event_id, summary_text)
+                        VALUES (%s, %s)
+                    """, (event_id, "Event ended. Summary was automatically generated."))
+                    conn.commit()
+
+        conn.close()
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to refresh event list: {e}")
