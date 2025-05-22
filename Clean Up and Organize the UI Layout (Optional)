@@ -1,0 +1,22 @@
+# Top header (already added earlier)
+top_frame = ttk.Frame(root)
+top_frame.pack(fill="x", pady=5, padx=10)
+
+app_title = ttk.Label(top_frame, text="Event Management System", font=("Arial", 16, "bold"))
+app_title.pack(side="left")
+
+username = get_username(user_id)
+user_label = ttk.Label(top_frame, text=f"Logged in as: {username}", font=("Arial", 10))
+user_label.pack(side="right")
+
+# Main content frame for calendar and events
+content_frame = ttk.Frame(root)
+content_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+# Split into calendar and events list
+calendar_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+event_frame.grid(row=0, column=1, sticky="nsew")
+
+# Configure grid weight for responsiveness
+content_frame.columnconfigure(0, weight=1)
+content_frame.columnconfigure(1, weight=2)
