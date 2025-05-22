@@ -1,0 +1,2 @@
+logout_btn = ttk.Button(top_frame, text="Logout", command=root.destroy)
+logout_btn.pack(side="right", padx=(0, 10))
